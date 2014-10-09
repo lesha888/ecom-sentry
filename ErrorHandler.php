@@ -7,23 +7,28 @@
  * @package crisu83.yii-sentry.components
  */
 
+namespace ecom\sentry;
+
+use Yii;
+use yii\base\InvalidConfigException;
+use yii\web\Application;
+
 /**
  * Error handler that allows for sending errors to Sentry.
  */
-class SentryErrorHandler extends CErrorHandler
+class ErrorHandler extends \yii\web\ErrorHandler
 {
     /**
      * @var string component ID for the sentry client.
      */
-    public $sentryClientID = 'sentry';
+    public $clientId = 'sentry';
 
     /**
      * Initializes the error handler.
      */
     public function init()
     {
-        parent::init();
-        Yii::app()->attachEventHandler('onEndRequest', array($this, 'onShutdown'));
+        Yii::$app->on(Application::EVENT_BEFORE_REQUEST, [$this, 'onShutdown']);
     }
 
     /**
@@ -50,25 +55,22 @@ class SentryErrorHandler extends CErrorHandler
         }
     }
 
-    /**
-     * Handles the PHP error.
-     * @param CErrorEvent $event the PHP error event
-     */
-    protected function handleError($event)
+    public function handleError($code, $message, $file, $line)
     {
-        if (error_reporting() & $event->code) {
+        if (error_reporting() & $code) {
             $this->getSentryClient()->captureException(
-                $this->createErrorException($event->message, $event->code, $event->file, $event->line)
+                $this->createErrorException($message, $code, $file, $line)
             );
         }
-        parent::handleError($event);
+
+        parent::handleError($code, $message, $file, $line);
     }
 
     /**
      * Handles the exception.
-     * @param Exception $exception the exception captured.
+     * @param \Exception $exception the exception captured.
      */
-    protected function handleException($exception)
+    public function handleException($exception)
     {
         $this->getSentryClient()->captureException($exception);
         parent::handleException($exception);
@@ -80,23 +82,24 @@ class SentryErrorHandler extends CErrorHandler
      * @param int $code error code.
      * @param string $file file in which the error occurred.
      * @param int $line line number on which the error occurred.
-     * @return ErrorException exception instance.
+     * @return \ErrorException exception instance.
      */
     protected function createErrorException($message, $code, $file, $line)
     {
-        return new ErrorException($message, $code, 0/* will be resolved */, $file, $line);
+        return new \ErrorException($message, $code, 0/* will be resolved */, $file, $line);
     }
 
     /**
      * Returns the Sentry client component.
-     * @return SentryClient client instance.
-     * @throws CException if the component id is invalid.
+     * @return Sentry client instance.
+     * @throws InvalidConfigException if the component id is invalid.
      */
     public function getSentryClient()
     {
-        if (!Yii::app()->hasComponent($this->sentryClientID)) {
-            throw new CException(sprintf('SentryErrorHandler.componentID "%s" is invalid.', $this->sentryClientID));
+        if (!Yii::$app->has($this->clientId)) {
+            throw new InvalidConfigException('SentryErrorHandler.componentID "%s" is invalid.', $this->clientId));
         }
-        return Yii::app()->getComponent($this->sentryClientID);
+
+        return Yii::$app->get($this->clientId);
     }
-} 
+}

@@ -4,8 +4,17 @@
  * @author Christoffer Niska <christoffer.niska@gmail.com>
  * @copyright Copyright &copy; Christoffer Niska 2013-
  * @license http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @package crisu83.yii-sentry.components
  */
+
+namespace ecom\sentry;
+
+use Yii;
+use yii\base\Component;
+use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\base\InvalidParamException;
+use yii\helpers\ArrayHelper;
+use yii\log\Logger;
 
 /**
  * Application component that allows to communicate with Sentry.
@@ -21,7 +30,7 @@
  * @method void registerDependencies($dependencies)
  * @method string resolveDependencyPath($name)
  */
-class SentryClient extends CApplicationComponent
+class Sentry extends Component
 {
     // Sentry constants.
     const MAX_MESSAGE_LENGTH = 2048;
@@ -42,7 +51,7 @@ class SentryClient extends CApplicationComponent
     /**
      * @var array list of names for environments in which data will be sent to Sentry.
      */
-    public $enabledEnvironments = array('production', 'staging');
+    public $enabledEnvironments = ['production', 'staging'];
 
     /**
      * @var array options to pass to the Raven client with the following structure:
@@ -57,17 +66,17 @@ class SentryClient extends CApplicationComponent
      *   shift_vars: (bool) whether to shift variables when creating a backtrace
      *   processors: (array) list of data processors
      */
-    public $options = array();
+    public $options = [];
 
     /**
      * @var array extra variables to send with exceptions to Sentry.
      */
-    public $extraVariables = array();
+    public $extraVariables = [];
 
     /**
      * Holds all event ids that were reported during this request
      */
-    protected $_loggedEventIds = array();
+    protected $_loggedEventIds = [];
 
     /**
      * @param mixed $loggedEventIds
@@ -85,7 +94,7 @@ class SentryClient extends CApplicationComponent
         return $this->_loggedEventIds;
     }
 
-    /** @var Raven_Client */
+    /** @var \Raven_Client */
     private $_client;
 
     /**
@@ -93,7 +102,6 @@ class SentryClient extends CApplicationComponent
      */
     public function init()
     {
-        parent::init();
         $this->_client = $this->createClient();
     }
 
@@ -106,9 +114,9 @@ class SentryClient extends CApplicationComponent
      * @param string $logger name of the logger.
      * @param mixed $context exception context.
      * @return string event id (or null if not captured).
-     * @throws CException if logging the exception fails.
+     * @throws Exception if logging the exception fails.
      */
-    public function captureException($exception, $options = array(), $logger = '', $context = null)
+    public function captureException($exception, $options = [], $logger = '', $context = null)
     {
         if (!$this->isEnvironmentEnabled()) {
             return null;
@@ -118,16 +126,16 @@ class SentryClient extends CApplicationComponent
             $eventId = $this->_client->getIdent(
                 $this->_client->captureException($exception, $options, $logger, $context)
             );
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if (YII_DEBUG) {
-                throw new CException('SentryClient failed to log exception: ' . $e->getMessage(), (int)$e->getCode());
+                throw new Exception('SentryClient failed to log exception: ' . $e->getMessage(), (int)$e->getCode());
             } else {
-                $this->log($e->getMessage(), CLogger::LEVEL_ERROR);
-                throw new CException('SentryClient failed to log exception.', (int)$e->getCode());
+                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+                throw new Exception('SentryClient failed to log exception.', (int)$e->getCode());
             }
         }
         $this->_loggedEventIds[] = $eventId;
-        $this->log(sprintf('Exception logged to Sentry with event id: %d', $eventId), CLogger::LEVEL_INFO);
+        $this->log(sprintf('Exception logged to Sentry with event id: %d', $eventId), Logger::LEVEL_INFO);
         return $eventId;
     }
 
@@ -141,12 +149,12 @@ class SentryClient extends CApplicationComponent
      * @param bool $stack whether to send the stack trace.
      * @param mixed $context message context.
      * @return string event id (or null if not captured).
-     * @throws CException if logging the message fails.
+     * @throws Exception if logging the message fails.
      */
-    public function captureMessage($message, $params = array(), $options = array(), $stack = false, $context = null)
+    public function captureMessage($message, $params = [], $options = [], $stack = false, $context = null)
     {
         if (strlen($message) > self::MAX_MESSAGE_LENGTH) {
-            throw new CException(sprintf(
+            throw new InvalidParamException(sprintf(
                 'SentryClient cannot send messages that contain more than %d characters.',
                 self::MAX_MESSAGE_LENGTH
             ));
@@ -159,28 +167,28 @@ class SentryClient extends CApplicationComponent
             $eventId = $this->_client->getIdent(
                 $this->_client->captureMessage($message, $params, $options, $stack, $context)
             );
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if (YII_DEBUG) {
-                throw new CException('SentryClient failed to log message: ' . $e->getMessage(), (int)$e->getCode());
+                throw new Exception('SentryClient failed to log message: ' . $e->getMessage(), (int)$e->getCode());
             } else {
-                $this->log($e->getMessage(), CLogger::LEVEL_ERROR);
-                throw new CException('SentryClient failed to log message.', (int)$e->getCode());
+                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+                throw new Exception('SentryClient failed to log message.', (int)$e->getCode());
             }
         }
         $this->_loggedEventIds[] = $eventId;
-        $this->log(sprintf('Message logged to Sentry with event id: %d', $eventId), CLogger::LEVEL_INFO);
+        $this->log(sprintf('Message logged to Sentry with event id: %d', $eventId), Logger::LEVEL_INFO);
         return $eventId;
     }
 
     /**
      * Logs a query to Sentry.
      * @param string $query query to log.
-     * @param string $level log level.
+     * @param integer $level log level.
      * @param string $engine name of the sql driver.
      * @return string event id (or null if not captured).
-     * @throws CException if logging the query fails.
+     * @throws Exception if logging the query fails.
      */
-    public function captureQuery($query, $level = CLogger::LEVEL_INFO, $engine = '')
+    public function captureQuery($query, $level = Logger::LEVEL_INFO, $engine = '')
     {
         if (!$this->isEnvironmentEnabled()) {
             return null;
@@ -189,16 +197,16 @@ class SentryClient extends CApplicationComponent
             $eventId = $this->_client->getIdent(
                 $this->_client->captureQuery($query, $level, $engine)
             );
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if (YII_DEBUG) {
-                throw new CException('SentryClient failed to log query: ' . $e->getMessage(), (int)$e->getCode());
+                throw new Exception('SentryClient failed to log query: ' . $e->getMessage(), (int)$e->getCode());
             } else {
-                $this->log($e->getMessage(), CLogger::LEVEL_ERROR);
-                throw new CException('SentryClient failed to log query.', (int)$e->getCode());
+                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+                throw new Exception('SentryClient failed to log query.', (int)$e->getCode());
             }
         }
         $this->_loggedEventIds[] = $eventId;
-        $this->log(sprintf('Query logged to Sentry with event id: %d', $eventId), CLogger::LEVEL_INFO);
+        $this->log(sprintf('Query logged to Sentry with event id: %d', $eventId), Logger::LEVEL_INFO);
         return $eventId;
     }
 
@@ -218,9 +226,10 @@ class SentryClient extends CApplicationComponent
     protected function processOptions(&$options)
     {
         if (!isset($options['extra'])) {
-            $options['extra'] = array();
+            $options['extra'] = [];
         }
-        $options['extra'] = CMap::mergeArray($this->extraVariables, $options['extra']);
+
+        $options['extra'] = ArrayHelper::merge($this->extraVariables, $options['extra']);
     }
 
     /**
@@ -230,35 +239,36 @@ class SentryClient extends CApplicationComponent
      */
     protected function log($message, $level)
     {
-        Yii::log($message, $level, 'crisu83.sentry.components.SentryClient');
+        Yii::getLogger()->log($message, $level, 'ecom.sentry');
     }
 
     /**
      * Creates a Raven client
      * @return Raven_Client client instance.
-     * @throws CException if the client could not be created.
+     * @throws Exception if the client could not be created.
      */
     protected function createClient()
     {
-        $options = CMap::mergeArray(
-            array(
+        $options = ArrayHelper::merge(
+            [
                 'logger' => 'yii',
-                'tags' => array(
+                'tags' => [
                     'environment' => $this->environment,
                     'php_version' => phpversion(),
-                ),
-            ),
+                ],
+            ],
             $this->options
         );
+
         try {
             $this->checkTags($options['tags']);
-            return new Raven_Client($this->dns, $options);
-        } catch (Exception $e) {
+            return new \Raven_Client($this->dns, $options);
+        } catch (\Exception $e) {
             if (YII_DEBUG) {
-                throw new CException('SentryClient failed to create client: ' . $e->getMessage(), (int)$e->getCode());
+                throw new Exception('SentryClient failed to create client: ' . $e->getMessage(), (int)$e->getCode());
             } else {
-                $this->log($e->getMessage(), CLogger::LEVEL_ERROR);
-                throw new CException('SentryClient failed to create client.', (int)$e->getCode());
+                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+                throw new Exception('SentryClient failed to create client.', (int)$e->getCode());
             }
         }
     }
@@ -266,19 +276,20 @@ class SentryClient extends CApplicationComponent
     /**
      * Checks that the given tags are valid.
      * @param array $tags tags to check.
-     * @throws CException if a tag is invalid.
+     * @throws Exception if a tag is invalid.
      */
     protected function checkTags($tags)
     {
         foreach ($tags as $key => $value) {
             if (strlen($key) > self::MAX_TAG_KEY_LENGTH) {
-                throw new CException(sprintf(
+                throw new InvalidConfigException(sprintf(
                     'SentryClient does not allow tag keys that contain more than %d characters.',
                     self::MAX_TAG_KEY_LENGTH
                 ));
             }
+
             if (strlen($value) > self::MAX_TAG_VALUE_LENGTH) {
-                throw new CException(sprintf(
+                throw new InvalidConfigException(sprintf(
                     'SentryClient does not allow tag values that contain more than %d characters.',
                     self::MAX_TAG_VALUE_LENGTH
                 ));

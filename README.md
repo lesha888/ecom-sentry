@@ -3,9 +3,9 @@ yii-sentry
 
 [![Latest Stable Version](https://poser.pugx.org/crisu83/yii-sentry/v/stable.png)](https://packagist.org/packages/crisu83/yii-sentry)
 
-Sentry for the Yii PHP framework.
+Sentry for the Yii PHP framework 2.
 
-yii-sentry is an extension for Yii that allows for sending data to [Sentry](http://getsentry.com). 
+ecom/sentry is an extension for Yii2 that allows for sending data to [Sentry](http://getsentry.com).
 It comes with an application component that allows for centralized access to the Raven client,
 an error handler that sends errors and exception to Sentry and a log route that sends log messages to Sentry.
 It has never been this easy to professionally manage your errors.

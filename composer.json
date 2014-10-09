@@ -1,7 +1,7 @@
 {
-    "name": "crisu83/yii-sentry",
-    "description": "Sentry for the Yii PHP framework.",
-    "keywords": ["yii", "sentry", "log", "error", "exception"],
+    "name": "ecom/sentry",
+    "description": "Sentry for the Yii2 PHP framework.",
+    "keywords": ["yii2", "sentry", "log", "error", "exception"],
     "type": "library",
     "license": "BSD-3-Clause",
     "authors": [
@@ -11,15 +11,13 @@
             "homepage": "http://www.cniska.net/"
         }
     ],
+    "minimum-stability": "dev",
     "require": {
-        "raven/raven": "0.8.*"
-    },
-    "require-dev": {
-        "yiisoft/yii": ">=1.1.14"
+        "raven/raven": "0.10.*"
     },
     "autoload": {
-        "classmap": [
-            "components/"
-        ]
+        "psr-4": {
+            "ecom\\sentry\\": ""
+        }
     }
 }

@@ -1,21 +1,28 @@
 <?php
 /**
- * SentryLogRoute class file.
+ * LogTarget class file.
  * @author Christoffer Niska <christoffer.niska@gmail.com>
  * @copyright Copyright &copy; Christoffer Niska 2013-
  * @license http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @package crisu83.yii-sentry.components
  */
 
+namespace ecom\sentry;
+
+use Yii;
+use yii\base\InvalidConfigException;
+use yii\log\Logger;
+use yii\log\Target;
+
 /**
  * Log route that allows for sending messages to Sentry.
  */
-class SentryLogRoute extends CLogRoute
+class LogTarget extends Target
 {
     /**
      * @var string component ID for the sentry client.
      */
-    public $sentryClientID = 'sentry';
+    public $clientId = 'sentry';
 
     /**
      * Processes log messages and sends them to specific destination.
@@ -47,16 +54,35 @@ class SentryLogRoute extends CLogRoute
         }
     }
 
+    public function export()
+    {
+        $client = $this->getSentryClient();
+
+        foreach($this->messages as $message) {
+            list($text, $level, $category, $timestamp) = $message;
+
+            $client->captureMessage($text, [], [
+                'extra' => [
+                    'message' => $text,
+                    'level' => Logger::getLevelName($level),
+                    'category' => $category,
+                    'log_time' => date('Y-m-d H:i:s', $timestamp),
+                ],
+            ]);
+        }
+    }
+
     /**
      * Returns the Sentry client component.
-     * @return SentryClient client instance.
-     * @throws CException if the component id is invalid.
+     * @return Sentry client instance.
+     * @throws InvalidConfigException if the component id is invalid.
      */
     public function getSentryClient()
     {
-        if (!Yii::app()->hasComponent($this->sentryClientID)) {
-            throw new CException(sprintf('SentryLogRoute.componentID "%s" is invalid.', $this->sentryClientID));
+        if (!Yii::$app->has($this->clientId)) {
+            throw new InvalidConfigException(sprintf('SentryLogRoute.componentID "%s" is invalid.', $this->clientId));
         }
-        return Yii::app()->getComponent($this->sentryClientID);
+
+        return Yii::$app->get($this->clientId);
     }
 }
