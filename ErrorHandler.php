@@ -97,7 +97,7 @@ class ErrorHandler extends \yii\web\ErrorHandler
     public function getSentryClient()
     {
         if (!Yii::$app->has($this->clientId)) {
-            throw new InvalidConfigException('SentryErrorHandler.componentID "%s" is invalid.', $this->clientId));
+            throw new InvalidConfigException('SentryErrorHandler.componentID "%s" is invalid.', $this->clientId);
         }
 
         return Yii::$app->get($this->clientId);
