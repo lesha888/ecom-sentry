@@ -55,25 +55,11 @@ class ErrorHandler extends \yii\web\ErrorHandler
         }
     }
 
-    public function handleError($code, $message, $file, $line)
-    {
-        if (error_reporting() & $code) {
-            $this->getSentryClient()->captureException(
-                $this->createErrorException($message, $code, $file, $line)
-            );
-        }
-
-        parent::handleError($code, $message, $file, $line);
-    }
-
-    /**
-     * Handles the exception.
-     * @param \Exception $exception the exception captured.
-     */
-    public function handleException($exception)
+    public function logException($exception)
     {
         $this->getSentryClient()->captureException($exception);
-        parent::handleException($exception);
+
+        parent::logException($exception);
     }
 
     /**
