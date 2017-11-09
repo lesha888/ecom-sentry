@@ -55,6 +55,11 @@ class Component extends yii\base\Component
     public $environment = 'dev';
 
     /**
+     * @var bool Call
+     */
+    public $install = 'dev';
+
+    /**
      * @var array list of names for environments in which data will be sent to Sentry.
      */
     public $enabledEnvironments = ['production', 'staging', 'dev'];
@@ -115,6 +120,10 @@ class Component extends yii\base\Component
             return null;
         }
         $this->_client = $this->createClient();
+
+        if ($this->install) {
+            $this->_client->install();
+        }
     }
 
     /**
