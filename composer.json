@@ -18,7 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "lesha888\\sentry\\": ""
+            "lesha888\\sentry\\": "src"
         }
     }
 }

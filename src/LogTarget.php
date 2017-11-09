@@ -83,7 +83,7 @@ class LogTarget extends Target
 
     /**
      * Returns the Sentry client component.
-     * @return Sentry client instance.
+     * @return \Raven_Client client instance.
      * @throws InvalidConfigException if the component id is invalid.
      */
     public function getSentryClient()

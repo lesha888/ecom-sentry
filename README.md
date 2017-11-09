@@ -28,7 +28,7 @@ The easiest way to install this extension is to use [Composer](http://getcompose
 
 ```js
   "require": {
-    "crisu83/yii-sentry": "<replace-with-latest-version>"
+    "lesha888/yii2-sentry": "^1.3"
   }
 ```
 
@@ -48,6 +48,7 @@ Once you have downloaded the extension add the following to your application con
   'components' => array(
     'sentry' => array(
       'class' => lesha888\sentry\Component::class,
+      'enabled' => true,
       'dsn' => '<replace-with-your-sentry-dsn>'
     ),
   ),
@@ -57,6 +58,7 @@ The following configuration parameters are available for the SentryClient:
 
 * **dsn**: (string) dsn to use when connecting to Sentry
 * **environment**: (string) name of the active environment
+* **enable**: (bool) to skip collecting errors
 * **enabledEnvironments**: (array) list of names for environments in which data will be sent to Sentry
 * **options**: (array) options to pass to the Raven client with the following structure:
   * **logger**: (string) name of the logger

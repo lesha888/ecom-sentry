@@ -48,7 +48,7 @@ class ErrorHandler extends \yii\web\ErrorHandler
                 E_COMPILE_WARNING,
                 E_STRICT
             );
-            if (in_array($error['type'], $errors)) {
+            if (in_array($error['type'], $errors, true)) {
                 $this->getSentryClient()->captureException(
                     $this->createErrorException($error['message'], $error['type'], $error['file'], $error['line'])
                 );
@@ -78,7 +78,7 @@ class ErrorHandler extends \yii\web\ErrorHandler
 
     /**
      * Returns the Sentry client component.
-     * @return Sentry client instance.
+     * @return \Raven_Client client instance.
      * @throws InvalidConfigException if the component id is invalid.
      */
     public function getSentryClient()
