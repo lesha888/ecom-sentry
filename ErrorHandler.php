@@ -7,7 +7,7 @@
  * @package crisu83.yii-sentry.components
  */
 
-namespace ecom\sentry;
+namespace lesha888\sentry;
 
 use Yii;
 use yii\base\InvalidConfigException;
@@ -28,11 +28,12 @@ class ErrorHandler extends \yii\web\ErrorHandler
      */
     public function init()
     {
-        Yii::$app->on(Application::EVENT_BEFORE_REQUEST, [$this, 'onShutdown']);
+        Yii::$app->on(Application::STATE_AFTER_REQUEST, [$this, 'onShutdown']);
     }
 
     /**
      * Invoked on shutdown to attempt to capture any unhandled errors.
+     * @throws \yii\base\Exception
      */
     public function onShutdown()
     {
@@ -83,7 +84,7 @@ class ErrorHandler extends \yii\web\ErrorHandler
     public function getSentryClient()
     {
         if (!Yii::$app->has($this->clientId)) {
-            throw new InvalidConfigException('SentryErrorHandler.componentID "%s" is invalid.', $this->clientId);
+            throw new InvalidConfigException(sprintf('SentryErrorHandler.componentID "%s" is invalid.', $this->clientId));
         }
 
         return Yii::$app->get($this->clientId);

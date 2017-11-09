@@ -1,5 +1,5 @@
 {
-    "name": "ecom/sentry",
+    "name": "lesha888/sentry",
     "description": "Sentry for the Yii2 PHP framework.",
     "keywords": ["yii2", "sentry", "log", "error", "exception"],
     "type": "library",
@@ -11,13 +11,14 @@
             "homepage": "http://www.cniska.net/"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
-        "raven/raven": "0.10.*"
+        "yiisoft/yii2": "*",
+        "sentry/sentry": "^1.8.1"
     },
     "autoload": {
         "psr-4": {
-            "ecom\\sentry\\": ""
+            "lesha888\\sentry\\": ""
         }
     }
 }

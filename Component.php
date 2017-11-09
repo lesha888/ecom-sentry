@@ -6,10 +6,10 @@
  * @license http://www.opensource.org/licenses/bsd-license.php New BSD License
  */
 
-namespace ecom\sentry;
+namespace lesha888\sentry;
 
+use Raven_Client;
 use Yii;
-use yii\base\Component;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
@@ -26,11 +26,10 @@ use yii\log\Logger;
  * @method void registerCssFile($url, $media = '')
  * @method void registerScriptFile($url, $position = null)
  * @method string resolveScriptVersion($filename, $minified = false)
- * @method CClientScript getClientScript()
  * @method void registerDependencies($dependencies)
  * @method string resolveDependencyPath($name)
  */
-class Sentry extends Component
+class Component extends yii\base\Component
 {
     // Sentry constants.
     const MAX_MESSAGE_LENGTH = 2048;
@@ -39,9 +38,16 @@ class Sentry extends Component
     const MAX_CULPRIT_LENGTH = 200;
 
     /**
-     * @var string dns to use when connecting to Sentry.
+     * Set to `false` in development environment to skip collecting errors
+     *
+     * @var bool
      */
-    public $dns;
+    public $enabled = true;
+
+    /**
+     * @var string dsn to use when connecting to Sentry.
+     */
+    public $dsn;
 
     /**
      * @var string name of the active environment.
@@ -51,7 +57,7 @@ class Sentry extends Component
     /**
      * @var array list of names for environments in which data will be sent to Sentry.
      */
-    public $enabledEnvironments = ['production', 'staging'];
+    public $enabledEnvironments = ['production', 'staging', 'dev'];
 
     /**
      * @var array options to pass to the Raven client with the following structure:
@@ -94,7 +100,7 @@ class Sentry extends Component
         return $this->_loggedEventIds;
     }
 
-    /** @var \Raven_Client */
+    /** @var Raven_Client */
     private $_client;
 
     /**
@@ -102,12 +108,18 @@ class Sentry extends Component
      */
     public function init()
     {
+        if (!$this->enabled) {
+            return;
+        }
+        if (!$this->isEnvironmentEnabled()) {
+            return null;
+        }
         $this->_client = $this->createClient();
     }
 
     /**
      * Logs an exception to Sentry.
-     * @param Exception $exception exception to log.
+     * @param \Exception $exception exception to log.
      * @param array $options capture options that can contain the following structure:
      *   culprit: (string) function call that caused the event
      *   extra: (array) additional metadata to store with the event
@@ -118,6 +130,9 @@ class Sentry extends Component
      */
     public function captureException($exception, $options = [], $logger = '', $context = null)
     {
+        if (!$this->enabled) {
+            return null;
+        }
         if (!$this->isEnvironmentEnabled()) {
             return null;
         }
@@ -150,9 +165,13 @@ class Sentry extends Component
      * @param mixed $context message context.
      * @return string event id (or null if not captured).
      * @throws Exception if logging the message fails.
+     * @throws InvalidParamException
      */
     public function captureMessage($message, $params = [], $options = [], $stack = false, $context = null)
     {
+        if (!$this->enabled) {
+            return null;
+        }
         if (strlen($message) > self::MAX_MESSAGE_LENGTH) {
             throw new InvalidParamException(sprintf(
                 'SentryClient cannot send messages that contain more than %d characters.',
@@ -190,6 +209,9 @@ class Sentry extends Component
      */
     public function captureQuery($query, $level = Logger::LEVEL_INFO, $engine = '')
     {
+        if (!$this->enabled) {
+            return null;
+        }
         if (!$this->isEnvironmentEnabled()) {
             return null;
         }
@@ -200,10 +222,10 @@ class Sentry extends Component
         } catch (\Exception $e) {
             if (YII_DEBUG) {
                 throw new Exception('SentryClient failed to log query: ' . $e->getMessage(), (int)$e->getCode());
-            } else {
-                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
-                throw new Exception('SentryClient failed to log query.', (int)$e->getCode());
             }
+
+            $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+            throw new Exception('SentryClient failed to log query.', (int)$e->getCode());
         }
         $this->_loggedEventIds[] = $eventId;
         $this->log(sprintf('Query logged to Sentry with event id: %d', $eventId), Logger::LEVEL_INFO);
@@ -216,7 +238,7 @@ class Sentry extends Component
      */
     protected function isEnvironmentEnabled()
     {
-        return in_array($this->environment, $this->enabledEnvironments);
+        return in_array($this->environment, $this->enabledEnvironments, true);
     }
 
     /**
@@ -262,14 +284,14 @@ class Sentry extends Component
 
         try {
             $this->checkTags($options['tags']);
-            return new \Raven_Client($this->dns, $options);
+            return new Raven_Client($this->dsn, $options);
         } catch (\Exception $e) {
             if (YII_DEBUG) {
                 throw new Exception('SentryClient failed to create client: ' . $e->getMessage(), (int)$e->getCode());
-            } else {
-                $this->log($e->getMessage(), Logger::LEVEL_ERROR);
-                throw new Exception('SentryClient failed to create client.', (int)$e->getCode());
             }
+
+            $this->log($e->getMessage(), Logger::LEVEL_ERROR);
+            throw new Exception('SentryClient failed to create client.', (int)$e->getCode());
         }
     }
 

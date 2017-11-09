@@ -47,15 +47,15 @@ Once you have downloaded the extension add the following to your application con
 ```php
   'components' => array(
     'sentry' => array(
-      'class' => 'vendor.crisu83.yii-sentry.components.SentryClient',
-      'dns' => '<replace-with-your-sentry-dns>'
+      'class' => lesha888\sentry\Component::class,
+      'dsn' => '<replace-with-your-sentry-dsn>'
     ),
   ),
 ```
 
 The following configuration parameters are available for the SentryClient:
 
-* **dns**: (string) dns to use when connecting to Sentry
+* **dsn**: (string) dsn to use when connecting to Sentry
 * **environment**: (string) name of the active environment
 * **enabledEnvironments**: (array) list of names for environments in which data will be sent to Sentry
 * **options**: (array) options to pass to the Raven client with the following structure:
@@ -77,7 +77,7 @@ To enable the SentryErrorHandler add the following to your application configura
 ```php
   'components' => array(
     'errorHandler' => array(
-      'class' => 'vendor.crisu83.yii-sentry.components.SentryErrorHandler',
+      'class' => lesha888\sentry\ErrorHandler::class,
     ),
   ),
 ```
@@ -98,7 +98,7 @@ To enable the SentryLogRoute add the following to your application configuration
       'class' => 'CLogRouter',
       'routes' => array(
         array(
-          'class' => 'vendor.crisu83.yii-sentry.components.SentryLogRoute',
+          'class' => lesha888\sentry\LogRoute::class,
           'levels' => 'error, warning',
         ),
       ),

@@ -7,7 +7,7 @@
  * @package crisu83.yii-sentry.components
  */
 
-namespace ecom\sentry;
+namespace lesha888\sentry;
 
 use Yii;
 use yii\base\InvalidConfigException;
@@ -35,21 +35,25 @@ class LogTarget extends Target
      *   [2] => category (string)
      *   [3] => timestamp (float, obtained by microtime(true)
      * );
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\base\Exception
      */
     protected function processLogs($logs)
     {
         foreach ($logs as $log) {
             $this->getSentryClient()->captureMessage(
                 $log[0],
-                array(),
-                array(
-                    'extra' => array(
+                [],
+                [
+                    'extra' => [
                         'message' => $log[0],
                         'level' => $log[1],
-                        'category' => $log[2],
                         'log_time' => date('Y-m-d H:i:s', $log[3]),
-                    ),
-                )
+                    ],
+                    'tags' => [
+                        'category' => $log[2],
+                    ],
+                ]
             );
         }
     }
@@ -61,14 +65,19 @@ class LogTarget extends Target
         foreach($this->messages as $message) {
             list($text, $level, $category, $timestamp) = $message;
 
-            $client->captureMessage($text, [], [
-                'extra' => [
-                    'message' => $text,
-                    'level' => Logger::getLevelName($level),
-                    'category' => $category,
-                    'log_time' => date('Y-m-d H:i:s', $timestamp),
-                ],
-            ]);
+            $client->captureMessage($text, [],
+                [
+                    'extra' => [
+                        'message' => $text,
+                        'level' => Logger::getLevelName($level),
+                        'log_time' => date('Y-m-d H:i:s', $timestamp),
+
+                    ],
+                    'tags' => [
+                        'category' => $category
+                    ]
+                ]
+            );
         }
     }
 
