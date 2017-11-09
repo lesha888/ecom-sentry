@@ -1,5 +1,5 @@
 {
-    "name": "lesha888/sentry",
+    "name": "lesha888/yii2-sentry",
     "description": "Sentry for the Yii2 PHP framework.",
     "keywords": ["yii2", "sentry", "log", "error", "exception"],
     "type": "library",
